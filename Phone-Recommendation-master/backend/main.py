@@ -16,7 +16,7 @@ ip = socket.gethostbyname(socket.gethostname())
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
-path='C:/Users/hoang/Downloads/Ron/A.TVDPT/Phone-Recommendation-master/Phone-Recommendation-master/backend/Sentiment_Classification/'
+path='Sentiment_Classification/'
 stopwords=set(open(path+'data/stopwords.txt',encoding='utf-8').read().split(' ')[:-1])
 max_token=joblib.load(path+'model/max_token.pkl')
 RNN_model=joblib.load(path+'model/LSTM_model.pkl')

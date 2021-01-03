@@ -8,19 +8,50 @@ const method = document.querySelector('#method')
 
 const PAGE_MAX = 15
 let domparser = new DOMParser()
-console.log(1)
+
+const getReviewsList = async (requests) => {
+	const reviews = await axios
+		.all(requests)
+		.then(axios.spread((...responses) => {
+			const list2D = responses.map(rs => {
+				let doc = domparser.parseFromString(rs.data, 'text/html')
+				const comments = doc.querySelectorAll('.ratingLst .par i')
+
+				const listComment = []
+
+				comments.forEach( function(element, index) {
+					if (element.innerText)
+					{
+						listComment.push(element.innerText)
+					} 
+				})
+				return listComment
+			}).filter(list => list.length > 0)
+
+			const list = [].concat(...list2D)
+			return list
+	}))
+	return reviews
+}
+
 const crawl = async () => {
 	result.innerHTML=`
 		<span>Đang xử lý...</span>
 	`
-	let productLink = input.value
+	let productName = input.value
+	productName = productName.replaceAll("+"," plus")
+	productName = productName.replaceAll(" ","-")
+	
+	
+	let productLinkOnTGDD = "https://www.thegioididong.com/dtdd/" + productName.toLowerCase()
+	console.log(productLinkOnTGDD)
 	const requests = Array.from(
 		{length: PAGE_MAX },
-		(_, i) => axios.get(`${productLink}/danh-gia?p=${i+1}`)
+		(_, i) => axios.get(`${productLinkOnTGDD}/danh-gia?p=${i+1}`)
 	)
 
 	const info = await axios
-		.get(productLink)
+		.get(productLinkOnTGDD)
 		.then(rs => {
 			let doc = domparser.parseFromString(rs.data, 'text/html')
 			const img = doc.querySelector('.picture img')
@@ -31,29 +62,16 @@ const crawl = async () => {
 			}
 		})
 
-	const reviews = await axios
-		.all(requests)
-		.then(axios.spread((...responses) => {
-			const list2D = responses.map(rs => {
-				let doc = domparser.parseFromString(rs.data, 'text/html')
-				const comments = doc.querySelectorAll('.ratingLst .par i')
-				const listComment = []
+	let reviews = await getReviewsList(requests)
 
-				comments.forEach( function(element, index) {
-					if (element.textContent) listComment.push(element.textContent)
-				})
-				return listComment
-			}).filter(list => list.length > 0)
-
-			const list = [].concat(...list2D)
-			return list
-	}))
 	return {
 		reviews,
 		src: info.src,
 		name: info.name
 	}
 }
+
+
 
 submit.addEventListener('click', async (e) => {
 	e.preventDefault()
